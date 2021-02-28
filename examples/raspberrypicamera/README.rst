@@ -11,7 +11,9 @@ First install the required packages:
 
 .. code-block:: console
 
-    $ pip install aiohttp aiortc
+    $ pip install aiohttp aiortc picamera
+
+Make sure you have installed required packges by aiortc with apt.
 
 When you start the example, it will create an HTTP server which you
 can connect to from your browser:
