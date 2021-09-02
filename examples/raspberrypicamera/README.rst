@@ -11,7 +11,7 @@ First install the required packages:
 
 .. code-block:: console
 
-    $ pip install aiohttp aiortc picamera
+    $ pip install -r requirements.txt
 
 Make sure you have installed required packges by aiortc with apt.
 
