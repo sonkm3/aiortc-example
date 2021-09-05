@@ -25,7 +25,8 @@ BASE_PATH = os.path.dirname(__file__)
 audio = None
 camera = None
 
-capabilities = RTCRtpSender.getCapabilities("video")
+audio_capabilities = RTCRtpSender.getCapabilities("audio")
+
 codec_parameters = OrderedDict(
     [
         ("packetization-mode", "1"),
@@ -86,6 +87,7 @@ async def offer(request):
     await pc.setRemoteDescription(offer)
     for t in pc.getTransceivers():
         if t.kind == "audio" and audio:
+            t.setCodecPreferences(audio_capabilities.codecs)
             pc.addTrack(audio.audio)
         if t.kind == "video":
             t.setCodecPreferences(preferences)
