@@ -70,8 +70,8 @@ async def offer(request):
         sei=False,
     )
 
-    # read audio stream from `hw:1,0` (via alsa, from card1, device0. see output from `arecord -l`)
-    # please check default Capture volume `amixer` you can set Capture volume by `amixer sset 'Capture' 80%`
+    # Read audio stream from `hw:1,0` (via alsa, from card1, device0. see output from `arecord -l`)
+    # Please check default Capture volume by `amixer`. You can set Capture volume by `amixer sset 'Capture' 80%`
     try:
         audio = MediaPlayer("hw:1,0", format='alsa', options={'channels': '1', 'sample_rate': '44100'})
     except:
