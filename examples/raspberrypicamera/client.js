@@ -54,16 +54,7 @@ function start() {
 
     // connect video
     pc.addEventListener('track', function(evt) {
-        console.log(evt.track.kind);
-        console.log(evt.streams)
-        // if (evt.track.kind == 'video') {
-        //     document.getElementById('video').srcObject = evt.streams[1];
-        // }
-        // if (evt.track.kind == 'audio') {
-        //     document.getElementById('video').srcObject = evt.streams[0];
-        // }
-        document.getElementById('video').srcObject = evt.streams[1];
-
+        document.getElementById('video').srcObject = evt.streams[0];
     });
 
     document.getElementById('start').style.display = 'none';
