@@ -25,8 +25,6 @@ BASE_PATH = os.path.dirname(__file__)
 audio = None
 camera = None
 
-audio_capabilities = RTCRtpSender.getCapabilities("audio")
-
 codec_parameters = OrderedDict(
     [
         ("packetization-mode", "1"),
