@@ -52,13 +52,12 @@ function start() {
 
     pc = new RTCPeerConnection(config);
 
-    // connect video
+    // connect audio / video
     pc.addEventListener('track', function(evt) {
         if (evt.track.kind == 'video') {
-            document.getElementById('video').videoTracks = evt.streams[0].getVideoTracks();
-        }
-        if (evt.track.kind == 'audio') {
-            document.getElementById('video').audioTracks = evt.streams[0].getAudioTracks();
+            document.getElementById('video').srcObject = evt.streams[0];
+        } else {
+            document.getElementById('audio').srcObject = evt.streams[0];
         }
     });
 
@@ -69,10 +68,10 @@ function start() {
 
 function stop() {
     document.getElementById('stop').style.display = 'none';
+    document.getElementById('start').style.display = 'inline-block';
 
     // close peer connection
     setTimeout(function() {
         pc.close();
-        document.getElementById('start').style.display = 'inline-block';
     }, 500);
 }

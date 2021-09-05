@@ -72,7 +72,13 @@ async def offer(request):
         sei=False,
     )
 
-    audio = MediaPlayer("hw:1,0", format='alsa', options={'channels': '1'})
+    # read audio stream from `hw:1,0` (via alsa, from card1, device0. see output from `arecord -l`)
+    # please check default Capture volume `amixer` you can set Capture volume by `amixer sset 'Capture' 80%`
+    try:
+        audio = MediaPlayer("hw:1,0", format='alsa', options={'channels': '1', 'sample_rate': '44100'})
+    except:
+        print('Could not open or read audio device.')
+        audio = None
 
     pc = RTCPeerConnection()
     pcs.add(pc)
@@ -86,10 +92,9 @@ async def offer(request):
 
     await pc.setRemoteDescription(offer)
     for t in pc.getTransceivers():
-        if t.kind == "audio" and audio:
-            t.setCodecPreferences(audio_capabilities.codecs)
+        if t.kind == "audio" and audio and audio.audio:
             pc.addTrack(audio.audio)
-        if t.kind == "video":
+        if t.kind == "video" and video_track:
             t.setCodecPreferences(preferences)
             pc.addTrack(video_track)
     answer = await pc.createAnswer()
@@ -112,7 +117,6 @@ async def on_shutdown(app):
     pcs.clear()
     camera.stop_recording()
     camera.close()
-    audio.close()
 
 
 if __name__ == "__main__":
