@@ -2,6 +2,7 @@ var pc = null;
 
 function negotiate() {
     pc.addTransceiver('video', {direction: 'recvonly'});
+    pc.addTransceiver('audio', {direction: 'recvonly'});
     return pc.createOffer().then(function(offer) {
         return pc.setLocalDescription(offer);
     }).then(function() {
@@ -53,9 +54,16 @@ function start() {
 
     // connect video
     pc.addEventListener('track', function(evt) {
-        if (evt.track.kind == 'video') {
-            document.getElementById('video').srcObject = evt.streams[0];
-        }
+        console.log(evt.track.kind);
+        console.log(evt.streams)
+        // if (evt.track.kind == 'video') {
+        //     document.getElementById('video').srcObject = evt.streams[1];
+        // }
+        // if (evt.track.kind == 'audio') {
+        //     document.getElementById('video').srcObject = evt.streams[0];
+        // }
+        document.getElementById('video').srcObject = evt.streams[1];
+
     });
 
     document.getElementById('start').style.display = 'none';
