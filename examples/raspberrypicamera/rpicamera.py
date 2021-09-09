@@ -4,17 +4,14 @@ import logging
 import os
 from collections import OrderedDict
 
-
-import av
 import picamera
 from aiohttp import web
-from pitrack import H264EncodedStreamTrack
-from rtcpeerconnection import RTCPeerConnection
-from rtcrtpsender import RTCRtpSender
-
 from aiortc import RTCSessionDescription
 from aiortc.contrib.media import MediaPlayer
 from aiortc.rtcrtpparameters import RTCRtpCodecCapability
+from pitrack import H264EncodedStreamTrack
+from rtcpeerconnection import RTCPeerConnection
+from rtcrtpsender import RTCRtpSender
 
 logger = logging.getLogger(__name__)
 
@@ -73,9 +70,11 @@ async def offer(request):
     # Read audio stream from `hw:1,0` (via alsa, from card1, device0. see output from `arecord -l`)
     # Please check default Capture volume by `amixer`. You can set Capture volume by `amixer sset 'Capture' 80%`
     try:
-        audio = MediaPlayer("hw:1,0", format='alsa', options={'channels': '1', 'sample_rate': '44100'})
+        audio = MediaPlayer(
+            "hw:1,0", format="alsa", options={"channels": "1", "sample_rate": "44100"}
+        )
     except:
-        print('Could not open or read audio device.')
+        print("Could not open or read audio device.")
         audio = None
 
     pc = RTCPeerConnection()
