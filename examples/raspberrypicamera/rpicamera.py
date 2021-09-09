@@ -115,6 +115,7 @@ async def on_shutdown(app):
     pcs.clear()
     camera.stop_recording()
     camera.close()
+    audio.audio.stop()
 
 
 if __name__ == "__main__":
