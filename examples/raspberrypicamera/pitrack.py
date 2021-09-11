@@ -3,9 +3,10 @@ import math
 from abc import abstractmethod
 from queue import Queue
 from struct import pack
-from typing import Iterator, List, Tuple
+from typing import Iterator, List, Tuple, Dict, Optional, Set
 
-from aiortc.mediastreams import MediaStreamTrack
+from aiortc.contrib.media import RelayStreamTrack
+from aiortc.mediastreams import MediaStreamError, MediaStreamTrack
 from av.frame import Frame
 
 PACKET_MAX = 1300
@@ -200,3 +201,78 @@ class H264EncodedStreamTrack(EncodedStreamTrack):
         self._timestamp += int(self._frame_time * self._clock_rate)
         timestamp = self._timestamp
         return self._packetize(self._split_bitstream(nal)), timestamp
+
+class EncodedRelayStreamTrack(RelayStreamTrack, H264EncodedStreamTrack):
+    async def recv_encoded(self, keyframe=False) -> List[bytes]:
+        while True:
+            if self.nal_queue.empty():
+                await asyncio.sleep(self._frame_time)
+                continue
+            nal = self.nal_queue.get()
+            if (nal[4] & 0x1F) != 0x01 or not keyframe:
+                break
+        self._timestamp += int(self._frame_time * self._clock_rate)
+        timestamp = self._timestamp
+        return self._packetize(self._split_bitstream(nal)), timestamp
+
+
+class EncodedMediaRelay:
+    """
+    A media source that relays one or more tracks to multiple consumers.
+
+    This is especially useful for live tracks such as webcams or media received
+    over the network.
+    """
+
+    def __init__(self) -> None:
+        self.__proxies: Dict[MediaStreamTrack, Set[EncodedRelayStreamTrack]] = {}
+        self.__tasks: Dict[MediaStreamTrack, asyncio.Future[None]] = {}
+
+    def subscribe(self, track: MediaStreamTrack) -> MediaStreamTrack:
+        """
+        Create a proxy around the given `track` for a new consumer.
+        """
+        proxy = EncodedRelayStreamTrack(self, track)
+        self.__log_debug("Create proxy %s for source %s", id(proxy), id(track))
+        if track not in self.__proxies:
+            self.__proxies[track] = set()
+        return proxy
+
+    def _start(self, proxy: EncodedRelayStreamTrack) -> None:
+        track = proxy._source
+        if track is not None and track in self.__proxies:
+            # register proxy
+            if proxy not in self.__proxies[track]:
+                self.__log_debug("Start proxy %s", id(proxy))
+                self.__proxies[track].add(proxy)
+
+            # start worker
+            if track not in self.__tasks:
+                self.__tasks[track] = asyncio.ensure_future(self.__run_track(track))
+
+    def _stop(self, proxy: EncodedRelayStreamTrack) -> None:
+        track = proxy._source
+        if track is not None and track in self.__proxies:
+            # unregister proxy
+            self.__log_debug("Stop proxy %s", id(proxy))
+            self.__proxies[track].discard(proxy)
+
+    def __log_debug(self, msg: str, *args) -> None:
+        logger.debug(f"MediaRelay(%s) {msg}", id(self), *args)
+
+    async def __run_track(self, track: MediaStreamTrack) -> None:
+        self.__log_debug("Start reading source %s" % id(track))
+
+        while True:
+            try:
+                frame = await track.recv()
+            except MediaStreamError:
+                frame = None
+            for proxy in self.__proxies[track]:
+                proxy._queue.put_nowait(frame)
+            if frame is None:
+                break
+
+        self.__log_debug("Stop reading source %s", id(track))
+        del self.__proxies[track]
+        del self.__tasks[track]
